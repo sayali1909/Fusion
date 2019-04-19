@@ -22,7 +22,7 @@ from applications.placement_cell.models import (Achievement, Course, Education,
                                                 Experience, Has, Patent,
                                                 Project, Publication, Skill)
 from Fusion.settings import LOGIN_URL
-
+#from notifications.models import Notification
 
 def index(request):
     context = {}
@@ -676,11 +676,32 @@ def about(request):
 @login_required(login_url=LOGIN_URL)
 def dashboard(request):
     user = request.user
+    extrainfo = ExtraInfo.objects.get(user=user)
+    holds_designations = HoldsDesignation.objects.filter(user=user)
+    desig = holds_designations
+    context = {}
+#    notifs=request.user.notifications.all()
+    context={
+            
+#        'notifications':notifs
+    }
+    for d in desig:
+        if d.designation.name == 'Director':
+            #print("director matched \n\n\n")
+            return render(request, "dashboard/dashboard2.html", context )
+
+    return render(request, "dashboard/dashboard.html", context)
+
+
+@login_required(login_url=LOGIN_URL)
+def profile(request, username=None):
+    user = get_object_or_404(User, Q(username=username)) if username else request.user
+    print('user', user)
+
     profile = get_object_or_404(ExtraInfo, Q(user=user))
-    if(str(request.user.extrainfo.user_type)=='faculty'):
-        return HttpResponseRedirect('/eis/profile')
-    #             print(str(request.user.extrainfo.department))
-    if(str(request.user.extrainfo.department)=='department: Academics'):
+    if(str(user.extrainfo.user_type)=='faculty'):
+        return HttpResponseRedirect('/eis/profile/' + (username if username else ''))
+    if(str(user.extrainfo.department)=='department: Academics'):
         return HttpResponseRedirect('/aims')
     current = HoldsDesignation.objects.filter(Q(working=user, designation__name="student"))
     if current:
@@ -710,7 +731,7 @@ def dashboard(request):
                 contact = request.POST.get('contact')
                 extrainfo_obj = ExtraInfo.objects.get(user=user)
                 extrainfo_obj.about_me = about_me
-                # extrainfo_obj.age = age
+                extrainfo_obj.date_of_birth = age
                 extrainfo_obj.address = address
                 extrainfo_obj.phone_no = contact
                 extrainfo_obj.save()
@@ -725,8 +746,13 @@ def dashboard(request):
                 if form.is_valid():
                     skill = form.cleaned_data['skill']
                     skill_rating = form.cleaned_data['skill_rating']
+                    try:
+                      skill_id = Skill.objects.get(skill=skill)
+                    except Exception as e:
+                      skill_id = Skill.objects.create(skill=skill)
+                      skill_id.save()
                     has_obj = Has.objects.create(unique_id=student,
-                                                 skill_id=Skill.objects.get(skill=skill),
+                                                 skill_id=skill_id,
                                                  skill_rating = skill_rating)
                     has_obj.save()
             if 'achievementsubmit' in request.POST:
@@ -846,6 +872,8 @@ def dashboard(request):
                 hid = request.POST['deletepat']
                 hs = Patent.objects.get(Q(pk=hid))
                 hs.delete()
+
+        print('profile age----\n\n\n', profile.date_of_birth)
         form = AddEducation(initial={})
         form1 = AddProfile(initial={})
         form10 = AddSkill(initial={})
@@ -870,13 +898,9 @@ def dashboard(request):
                    'patent': patent, 'form': form, 'form1': form1, 'form14': form14,
                    'form5': form5, 'form6': form6, 'form7': form7, 'form8': form8,
                    'form10':form10, 'form11':form11, 'form12':form12, 'current':current}
-        return render(request, "dashboard/dashboard.html", context)
+        return render(request, "globals/student_profile.html", context)
     else:
-        context = {}
-        return render(request, "dashboard/dashboard.html", context)
-
-
-
+        return redirect("/")
 
 @login_required(login_url=LOGIN_URL)
 def logout_view(request):
@@ -1045,3 +1069,24 @@ def support_issue(request, id):
         "support_count": support_count,
     }
     return HttpResponse(json.dumps(context), "application/json")
+
+def search(request):
+    key = request.GET['q']
+    if len(key) < 3:
+        return render(request, "globals/search.html", {'sresults': ()})
+    words = (w.strip() for w in key.split())
+    name_q = Q()
+    for token in words:
+        name_q = name_q & (Q(first_name__icontains=token) | Q(last_name__icontains=token))
+    search_results = User.objects.filter(name_q)[:15]
+    search_extrainfo = []
+    # print(search_results)
+    # print(search_extrainfo)
+    for result in search_results:
+        search_extrainfo.append(ExtraInfo.objects.get(user=result))
+    # print(User.objects.filter(name_q))
+    # return redirect("/")
+
+    # zipped tuples sent, accessed in template by dot operator and indices 0 & 1
+    context = {'sresults':zip(search_results, search_extrainfo)}
+    return render(request, "globals/search.html", context)

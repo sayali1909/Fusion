@@ -1,91 +1,493 @@
-<form method="POST" action="{%url 'office:directorOffice' %}">
-    {% csrf_token %}
-    {% comment %}The add a new skill Accordian starts here!{% endcomment %}
-    <div class="ui form" style="padding: 8px; padding-left: 56px; padding-right: 12px;">
-        <div class="two fields">
-            <div class="twelve wide field">
-                <label>Faculty Name</label>
-                <select class="ui search fluid dropdown" name="faculty">
-                {% for fac in faculty %}
-                      <option value={{fac.id}} >{{fac.id}}</option>
-                {% endfor %}
-                </select>
+<head>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+  
+</head>
+
+
+
+{% extends 'globals/base.html' %}
+{% load static %}
+
+
+{% block title %}
+    Module
+{% endblock %}
+
+
+{% block body %}
+    {% block navBar %}
+        {% include 'dashboard/navbar.html' %}
+    {% endblock %}
+
+
+    {% comment %}The grid starts here!{% endcomment %}
+    <div class="ui stackable doubling grid">
+
+        {% comment %}The left-margin segment!{% endcomment %}
+        <div class="column"></div>
+
+        {% comment %}
+            The left-rail segment starts here!
+        {% endcomment %}
+        <div class="three wide column">
+
+            {% comment %}The user image card starts here!{% endcomment %}
+            {% block usercard %}
+
+                {% comment %}
+                TODO: Instead of Name write the position like "Office Of Dean Students!"
+                {% endcomment %}
+
+                {% include 'globals/usercard.html' %}
+            {% endblock %}
+            {% comment %}The user image card ends here!{% endcomment %}
+
+            <div class="ui divider"></div>
+
+            {% comment %}The Tab-Menu starts here!{% endcomment %}
+            <div class="ui huge fluid vertical pointing menu"
+                 style="max-width: 320px;">
+
+<!--                <a class=" item"  href="/" >
+                    Registrar Office
+                    <i class="right floated chevron right icon"></i>
+                </a>
+
+                
+                <a class="item" href="/">
+                    Office of Dean Students
+                    <i class="right floated chevron right icon"></i>
+                </a>
+
+                <a class="item" href="/">
+                    Office of Dean Academics
+                    <i class="right floated chevron right icon"></i>
+                </a>
+
+                <a class="item" href="/">
+                    Office of Dean RSPC
+                    <i class="right floated chevron right icon"></i>
+                </a>
+
+
+                <a class="item" href="/">
+                    Office of Dean P&D
+                    <i class="right floated chevron right icon"></i>
+                </a>
+
+                <a class="item" href="/">
+                    Purchase Office
+                    <i class="right floated chevron right icon"></i>
+                </a>
+            -->
+                <a class="active item" href="{% url 'office:viewFacProfile'%}" >
+                   View Faculty Profile
+                    <i class="right floated chevron right icon"></i>
+                </a>
+
+                <a class="item" href="{% url 'office:viewStaffProfile'%}"  >
+                    View Staff Profile
+                     <i class="right floated chevron right icon"></i>
+                 </a>
+
+                 <a class="item" href="{% url 'office:viewStudentProfile'%}"  >
+                    View Student Profile
+                     <i class="right floated chevron right icon"></i>
+                 </a>
+
+                
+ <!--               <a class="item" href="/">
+                    Create Appointment
+                    <i class="right floated chevron right icon"></i>
+                </a>
+            -->         
             </div>
-
-            <div class="four wide field">
-                <label><br></label>
-                <button class="ui primary submit button" type="submit" value="search" name="search">
-                    Search
-                    <i class="ui right floated search icon"></i>
-                </button>
-            </div>
-        </div>
+            {% comment %}The Tab-Menu ends here!{% endcomment %}
 
         </div>
-</form>
+        {% comment %}
+            The left-rail segment ends here!
+        {% endcomment %}
 
-<div class="ui divider"></div>
+        {% comment %}
+            The central-rail segment starts here!
+        {% endcomment %}
 
-<table class="ui very basic collapsing celled sortable table"
-       style="padding-left: 5%;
-                                                          padding-right: 5%;
-                                                          padding-top: 1%;
-                                                          padding-bottom: 1.5%;
-                                                          margin: auto;">
-    <thead>
-    <tr>
 
-        <th class="one wide column">
-            Faculty ID
-        </th>
-
-        <th class="six wide column">
-            Name
-        </th>
-
-        <th class="four wide column">
-            Designation
-        </th>
-
-        <th class="four wide column">
-            Department
-        </th>
-
-        <th class="one wide column">
-        </th>
-    </tr>
-    </thead>
-
-    <tbody>
-    <tr>
-        <td>
-            {{fsearch.id.id}}
-        </td>
-
-        <td>
-            {{fsearch.id.user.first_name}}
-        </td>
-
-        <td>
-            {{fsearch.id.designation}}
-        </td>
-
-        <td>
-            {{fsearch.id.department}}
-        </td>
-
-        <td>
-            <a class="ui inverted circular icon button" style="margin: auto;" target="_blank" href="">
-                <i class="large external link alternate black icon"></i>
-            </a>
-        </td>
-    </tr>
-
-    </tbody>
-</table>
 
 <br>
 <br>
 
+
+
 <div class="ui divider"></div>
+
+
+
+<!-- Department wise view of faculty -->
+
+{% block tab1 %}
+
+    {% comment %}The tab menu starts here!{% endcomment %}
+    <div>
+        <div class="ui divider"></div>
+        <h2>Faculty Profile Details</h2>
+        <div class="ui divider"></div>
+    <div class="ui pointing secondary menu" style="border: 1px solid lightgray">
+        
+        <a class="active item" data-tab="tab8content1">
+            CSE
+        </a>
+        <a class="item" data-tab="tab8content2">
+            ECE
+        </a>
+        <a class="item" data-tab="tab8content3">
+            ME
+        </a>
+        <a class="item" data-tab="tab8content4">
+            DESIGN
+        </a>
+        <a class="item" data-tab="tab8content5">
+            NATURAL SCIENCE
+        </a>
+    </div>
+
+   
+
+    <div class="ui active tab" data-tab="tab8content1">
+        <div class="ui vertical segment">
+            {% block tab8content1 %}
+            <table class="ui very basic collapsing celled sortable table"
+            style='border: 1px solid lightgray'
+            style="padding-left: 5%;
+                                                       padding-right: 5%;
+                                                       padding-top: 1%;
+                                                       padding-bottom: 1.5%;
+                                                       margin: auto;">
+            <thead>
+            <tr>
+
+                <th class="one wide column">
+                    Faculty ID
+                </th>
+
+                <th class="six wide column">
+                    Name
+                </th>
+                <th class="four wide column">
+                    Department
+                </th>
+
+
+                <th class="one wide column">
+                    </th>
+                </tr>
+                </thead>
+ 
+                <tbody>
+                {% for fac in csfaculty %}
+
+                <tr>
+                    <td>
+                        {{fac.id.id}}
+                    </td>
+ 
+                    <td>
+                        {{fac.id.user.first_name }}&nbsp{{fac.id.user.last_name }}
+                    </td>
+
+                     
+     
+                        <td>
+                            {{fac.id.department}}
+                        </td>
+                        <td>
+                            <a class="ui inverted circular icon button" style="margin: auto;" target="_blank" href="">
+                                <i class="large external link alternate black icon"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+
+                
+           
+            {% endblock %}
+        </div>
+    </div>
+
+    <div class="ui tab" data-tab="tab8content2">
+        <div class="ui vertical segment">
+            {% block tab8content2 %}
+            <table class="ui very basic collapsing celled sortable table"
+            style='border: 1px solid lightgray'
+            style="padding-left: 5%;
+                                                       padding-right: 5%;
+                                                       padding-top: 1%;
+                                                       padding-bottom: 1.5%;
+                                                       margin: auto;">
+            <thead>
+            <tr>
+
+                <th class="one wide column">
+                    Faculty ID
+                </th>
+
+                <th class="six wide column">
+                    Name
+                </th>
+
+
+                <th class="four wide column">
+                    Department
+                </th>
+
+                <th class="one wide column">
+                </th>
+            </tr>
+            </thead>
+
+            <tbody>
+            {% for fac in ecefaculty %}
+
+            <tr>
+                <td>
+                    {{fac.id.id}}
+                </td>
+
+                <td>
+                    {{fac.id.user.first_name }}&nbsp{{fac.id.user.last_name }}
+                </td>
+
+
+                <td>
+                    {{fac.id.department}}
+                </td>
+                <td>
+                    <a class="ui inverted circular icon button" style="margin: auto;" target="_blank" href="">
+                        <i class="large external link alternate black icon"></i>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+       
+            {% endblock %}
+        </div>
+    </div>
+
+    <div class="ui tab" data-tab="tab8content3">
+        <div class="ui vertical segment">
+            {% block tab8content3 %}
+            <table class="ui very basic collapsing celled sortable table"
+            style='border: 1px solid lightgray'
+            style="padding-left: 5%;
+                                                       padding-right: 5%;
+                                                       padding-top: 1%;
+                                                       padding-bottom: 1.5%;
+                                                       margin: auto;">
+            <thead>
+            <tr>
+
+                <th class="one wide column">
+                    Faculty ID
+                </th>
+
+                <th class="six wide column">
+                    Name
+                </th>
+
+
+
+                <th class="four wide column">
+                    Department
+                </th>
+
+                <th class="one wide column">
+                </th>
+            </tr>
+            </thead>
+
+            <tbody>
+            {% for fac in mefaculty %}
+
+            <tr>
+                <td>
+                    {{fac.id.id}}
+                </td>
+
+                <td>
+                    {{fac.id.user.first_name }}&nbsp{{fac.id.user.last_name }}
+                </td>
+
+
+
+                <td>
+                    {{fac.id.department}}
+                </td>
+                <td>
+                    <a class="ui inverted circular icon button" style="margin: auto;" target="_blank" href="">
+                        <i class="large external link alternate black icon"></i>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+       
+            {% endblock %}
+        </div>
+    </div>
+
+    <div class="ui tab" data-tab="tab8content4">
+        <div class="ui vertical segment">
+            {% block tab8content4 %}
+            <table class="ui very basic collapsing celled sortable table"
+            style='border: 1px solid lightgray'
+            style="padding-left: 5%;
+                                                       padding-right: 5%;
+                                                       padding-top: 1%;
+                                                       padding-bottom: 1.5%;
+                                                       margin: auto;">
+            <thead>
+            <tr>
+
+                <th class="one wide column">
+                    Faculty ID
+                </th>
+
+                <th class="six wide column">
+                    Name
+                </th>
+
+
+                <th class="four wide column">
+                    Department
+                </th>
+
+                <th class="one wide column">
+                </th>
+            </tr>
+            </thead>
+
+            <tbody>
+            {% for fac in desfaculty %}
+
+            <tr>
+                <td>
+                    {{fac.id.id}}
+                </td>
+
+                <td>
+                    {{fac.id.user.first_name }}&nbsp{{fac.id.user.last_name }}
+                </td>
+
+
+                <td>
+                    {{fac.id.department}}
+                </td>
+                <td>
+                    <a class="ui inverted circular icon button" style="margin: auto;" target="_blank" href="">
+                        <i class="large external link alternate black icon"></i>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+       
+            {% endblock %}
+        </div>
+    </div>
+
+    <div class="ui tab" data-tab="tab8content5">
+        <div class="ui vertical segment">
+            {% block tab7content5 %}
+            <table class="ui very basic collapsing celled sortable table"
+            style='border: 1px solid lightgray'
+            style="padding-left: 5%;
+                                                       padding-right: 5%;
+                                                       padding-top: 1%;
+                                                       padding-bottom: 1.5%;
+                                                       margin: auto;">
+            <thead>
+            <tr>
+
+                <th class="one wide column">
+                    Faculty ID
+                </th>
+
+                <th class="six wide column">
+                    Name
+                </th>
+
+
+
+                <th class="four wide column">
+                    Department
+                </th>
+
+                <th class="one wide column">
+                </th>
+            </tr>
+            </thead>
+
+            <tbody>
+            {% for fac in nsfaculty %}
+
+            <tr>
+                <td>
+                    {{fac.id.id}}
+                </td>
+
+                <td>
+                    {{fac.id.user.first_name }}&nbsp{{fac.id.user.last_name }}
+                </td>
+
+
+                <td>
+                    {{fac.id.department}}
+                </td>
+                <td>
+                    <a class="ui inverted circular icon button" style="margin: auto;" target="_blank" href="">
+                        <i class="large external link alternate black icon"></i>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+       
+            {% endblock %}
+        </div>
+    </div>
+
+</div>
+
+    {% comment %}Central rail segment ends here!{% endcomment %}
+
+
+</div>
+{% endblock tab1%}
+
+
+
+{% comment %}The right-margin segment!{% endcomment %}
+<div class="column"></div>
+
+
+{% comment %}The grid ends here!{% endcomment %}
+
+
+{% endblock %}
+
 

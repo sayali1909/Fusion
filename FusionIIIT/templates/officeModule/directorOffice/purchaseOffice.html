@@ -39,3 +39,30 @@
         </div>
     </div>
 {% endblock tab1%}
+
+{% block javascript %}
+
+
+    <script type="text/javascript">
+        $(document).ready(function(){
+             $.ajax({
+                type: 'POST',
+                url: '/office/directorOffice/Pp',
+                data: {},
+                contentType: "application/json; charset=utf-8",
+                dataType: 'json',
+                success: function(response){
+                    console.log(response)
+                    //$('#HOD_info').children('ol').html('')
+                    $('#HOD_info table tbody ol').html('')
+                    $('#HOD_list').append('<li> <h5>HOD (CSE) </h5>&nbsp;&nbsp -- &nbsp;' + response.csehod[0] + '</li><li> <h5>HOD (ECE) </h5>&nbsp;&nbsp -- &nbsp;' + response.ecehod[0] + '</li><li> <h5>HOD (ME) </h5>&nbsp;&nbsp -- &nbsp;'+ response.mehod[0] + '</li><li> <h5>HOD (NS) </h5>&nbsp;&nbsp -- &nbsp;'+ response.nshod[0] + '</li><li> <h5>HOD (DESIGN) </h5>&nbsp;&nbsp -- &nbsp;'+ response.deshod[0] + '</li>');
+       
+                },
+                error: function(rs, e){
+                console.log('error');
+                },
+            });
+        });
+        })
+    </script>
+{% endblock javascript %}

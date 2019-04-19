@@ -74,14 +74,14 @@ class Designation(models.Model):
     type = models.CharField(max_length=30, default='academic', choices=Constants.DESIGNATIONS)
 
     def __str__(self):
-        return self.name
+        return self.full_name
 
 
 class DepartmentInfo(models.Model):
     name = models.CharField(max_length=30, unique=True)
 
     def __str__(self):
-        return 'department: {}'.format(self.name)
+        return self.name
 
 
 class ExtraInfo(models.Model):
@@ -93,7 +93,7 @@ class ExtraInfo(models.Model):
     address = models.TextField(max_length=1000, default="")
     phone_no = models.BigIntegerField(null=True, default=9999999999)
     user_type = models.CharField(max_length=20, choices=Constants.USER_CHOICES)
-    department = models.ForeignKey(DepartmentInfo, on_delete=models.CASCADE, null=True, blank=True)
+    department = models.ForeignKey(DepartmentInfo, on_delete=models.CASCADE, null=True, blank=True,related_name='names')
     profile_picture = models.ImageField(null=True, blank=True, upload_to='globals/profile_pictures')
     about_me = models.TextField(default='NA', max_length=1000, blank=True)
 
