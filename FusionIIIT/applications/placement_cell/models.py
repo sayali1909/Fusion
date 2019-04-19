@@ -15,34 +15,71 @@ class Constants:
         ('ONGOING', 'Ongoing'),
         ('COMPLETED', 'Completed'),
     )
+
     ACHIEVEMENT_TYPE = (
         ('EDUCATIONAL', 'Educational'),
         ('OTHER', 'Other'),
     )
+
+    EVENT_TYPE = (
+        ('SOCIAL', 'Social'),
+        ('CULTURE', 'Culture'),
+        ('SPORT', 'Sport'),
+        ('OTHER', 'Other'),
+    )
+
     INVITATION_TYPE = (
         ('ACCEPTED', 'Accepted'),
         ('REJECTED', 'Rejected'),
         ('PENDING', 'Pending'),
+        ('IGNORE', 'IGNORE'),
     )
+
     PLACEMENT_TYPE = (
         ('PLACEMENT', 'Placement'),
         ('PBI', 'PBI'),
         ('HIGHER STUDIES', 'Higher Studies'),
         ('OTHER', 'Other'),
     )
+
     PLACED_TYPE = (
         ('NOT PLACED', 'Not Placed'),
         ('PLACED', 'Placed'),
     )
+
     DEBAR_TYPE = (
         ('NOT DEBAR', 'Not Debar'),
         ('DEBAR', 'Debar'),
     )
-    DEP = (
-        ('',''),
+
+    BTECH_DEP = (
         ('CSE', 'CSE'),
         ('ME','ME'),
-        ('ECE','ECE')
+        ('ECE','ECE'),
+    )
+
+    BDES_DEP = (
+        ('DESIGN', 'DESIGN'),
+    )
+
+    MTECH_DEP = (
+        ('CSE', 'CSE'),
+        ('CAD/CAM', 'CAD/CAM'),
+        ('DESIGN', 'DESIGN'),
+        ('MANUFACTURING', 'MANUFACTURING'),
+        ('MECHATRONICS', 'MECHATRONICS'),
+    )
+
+    MDES_DEP = (
+        ('DESIGN', 'DESIGN'),
+    )
+
+    PHD_DEP = (
+        ('CSE', 'CSE'),
+        ('ME','ME'),
+        ('ECE','ECE'),
+        ('DESIGN', 'DESIGN'),
+        ('NS', 'NS'),
     )
 
 
@@ -119,6 +156,17 @@ class Course(models.Model):
         return '{} - {}'.format(self.unique_id.id, self.course_name)
 
 
+class Conference(models.Model):
+    unique_id = models.ForeignKey(Student, on_delete=models.CASCADE)
+    conference_name = models.CharField(max_length=100, default='')
+    description = models.TextField(max_length=250, default='', null=True, blank=True)
+    sdate = models.DateField(_("Date"), default=datetime.date.today)
+    edate = models.DateField(null=True, blank=True)
+
+    def __str__(self):
+        return '{} - {}'.format(self.unique_id.id, self.conference_name)
+
+
 class Publication(models.Model):
     unique_id = models.ForeignKey(Student, on_delete=models.CASCADE)
     publication_title = models.CharField(max_length=100, default='')
@@ -128,6 +176,17 @@ class Publication(models.Model):
 
     def __str__(self):
         return '{} - {}'.format(self.unique_id.id, self.publication_title)
+
+
+class Reference(models.Model):
+    unique_id = models.ForeignKey(Student, on_delete=models.CASCADE)
+    reference_name = models.CharField(max_length=100, default='')
+    post = models.CharField(max_length=100, default='', null=True, blank=True)
+    email = models.CharField(max_length=50, default='')
+    mobile_number = models.CharField(max_length=15, blank=True, null=True)
+
+    def __str__(self):
+        return '{} - {}'.format(self.unique_id.id, self.reference_name)
 
 
 class Coauthor(models.Model):
@@ -177,6 +236,18 @@ class Achievement(models.Model):
     def __str__(self):
         return '{} - {}'.format(self.unique_id.id, self.achievement)
 
+class Extracurricular(models.Model):
+    unique_id = models.ForeignKey(Student, on_delete=models.CASCADE)
+    event_name = models.CharField(max_length=100, default='')
+    event_type = models.CharField(max_length=20, choices=Constants.EVENT_TYPE,
+                                        default='OTHER')
+    description = models.TextField(max_length=1000, default='', null=True, blank=True)
+    name_of_position = models.CharField(max_length=200, default='')
+    date_earned = models.DateField(_("Date"), default=datetime.date.today)
+
+    def __str__(self):
+        return '{} - {}'.format(self.unique_id.id, self.event_name)
+
 
 class MessageOfficer(models.Model):
     message = models.CharField(max_length=100, default='')
@@ -190,12 +261,29 @@ class NotifyStudent(models.Model):
     placement_type = models.CharField(max_length=20, choices=Constants.PLACEMENT_TYPE,
                                       default='PLACEMENT')
     company_name = models.CharField(max_length=100, default='')
-    ctc = models.DecimalField(decimal_places=2, max_digits=5)
+    ctc = models.DecimalField(decimal_places=4, max_digits=10)
     description = models.TextField(max_length=1000, default='', null=True, blank=True)
     timestamp = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return '{} - {}'.format(self.company_name, self.placement_type)
+
+    @property
+    def get_placement_schedule_object(self):
+        return PlacementSchedule.objects.filter(notify_id=self.id).first()
+
+
+class Role(models.Model):
+    role = models.CharField(max_length=100, blank=True, null=True)
+
+    def __str__(self):
+        return self.role
+
+class CompanyDetails(models.Model):
+    company_name = models.CharField(max_length=100, blank=True, null=True)
+
+    def __str__(self):
+        return self.company_name
 
 
 class PlacementStatus(models.Model):
@@ -205,10 +293,15 @@ class PlacementStatus(models.Model):
                                   default='PENDING')
     placed = models.CharField(max_length=20, choices=Constants.PLACED_TYPE,
                               default='NOT PLACED')
-    timestamp = models.DateTimeField(auto_now=False, auto_now_add=False, default=timezone.now)
+    timestamp = models.DateTimeField(auto_now=True)
+    no_of_days = models.IntegerField(default=10, null=True, blank=True)
 
     class Meta:
         unique_together = (('notify_id', 'unique_id'),)
+
+    @property
+    def response_date(self):
+        return self.timestamp+datetime.timedelta(days=self.no_of_days)
 
     def __str__(self):
         return '{} - {}'.format(self.unique_id.id, self.notify_id.company_name)
@@ -256,11 +349,19 @@ class PlacementSchedule(models.Model):
     location = models.CharField(max_length=100, default='')
     description = models.TextField(max_length=500, default='', null=True, blank=True)
     time = models.TimeField()
+    role = models.ForeignKey(Role, on_delete=models.CASCADE, null=True, blank=True)
     attached_file = models.FileField(upload_to='documents/placement/schedule', null=True, blank=True)
     schedule_at = models.DateTimeField(auto_now_add=False, auto_now=False, default=timezone.now, blank=True, null=True)
 
     def __str__(self):
         return '{} - {}'.format(self.notify_id.company_name, self.placement_date)
+
+    @property
+    def get_role(self):
+        try:
+            return self.role.role
+        except:
+            return ''
 
 
 class StudentPlacement(models.Model):

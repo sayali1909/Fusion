@@ -4,9 +4,12 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.files.storage import FileSystemStorage
+from django.core import serializers
 from django.db.models import Q
-from django.http import HttpResponse, HttpResponseRedirect
+from django.core.paginator import Paginator
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from PIL import Image
 
 from applications.academic_information.models import Student
@@ -21,12 +24,17 @@ from applications.placement_cell.forms import (AddAchievement, AddCourse,
 from applications.placement_cell.models import (Achievement, Course, Education,
                                                 Experience, Has, Patent,
                                                 Project, Publication, Skill)
+from applications.eis.models import faculty_about,emp_research_papers, emp_published_books
 from Fusion.settings import LOGIN_URL
+<<<<<<< HEAD
 #from notifications.models import Notification
+=======
+from notifications.models import Notification
+from .contextgenerator import *
+>>>>>>> upstream/master
 
 def index(request):
     context = {}
-    print(request.user)
     if(str(request.user)!="AnonymousUser"):
         return HttpResponseRedirect('/dashboard/')
     else:
@@ -675,6 +683,7 @@ def about(request):
 
 @login_required(login_url=LOGIN_URL)
 def dashboard(request):
+<<<<<<< HEAD
     user = request.user
     extrainfo = ExtraInfo.objects.get(user=user)
     holds_designations = HoldsDesignation.objects.filter(user=user)
@@ -901,6 +910,55 @@ def profile(request, username=None):
         return render(request, "globals/student_profile.html", context)
     else:
         return redirect("/")
+=======
+    user=request.user
+    notifs=request.user.notifications.all()
+    context={
+        'notifications':notifs
+    }
+    return render(request, "dashboard/dashboard.html", context)
+
+@login_required(login_url=LOGIN_URL)
+def profile(request, username=None):
+
+    """
+    Generic endpoint for views.
+    If it's a faculty, redirects to /eis/profile/*
+    If it's a student, displays the profile.
+    If the department is 'department: Academics:, redirects to /aims/
+    Otherwise, redirects to root
+    Args:
+        username: Username of the user. If None,
+            displays the profile of currently logged-in user
+    """
+    user = get_object_or_404(User, Q(username=username)) if username else request.user
+
+    editable = request.user == user
+    profile = get_object_or_404(ExtraInfo, Q(user=user))
+    
+    
+#user is faculty 
+    if(str(user.extrainfo.user_type)=='faculty'):
+      context = contextfacultymanage(request,user,profile)
+      return render(request,"eisModulenew/profile.html",context)
+    
+#user is academic
+    if(str(user.extrainfo.department)=='department: Academics'):
+        return HttpResponseRedirect('/ais')
+
+
+
+#user is student
+    current = HoldsDesignation.objects.filter(Q(working=user, designation__name="student"))
+    if current:
+      context = contextstudentmanage(current,profile,request,user,editable)
+      return render(request, "globals/student_profile.html", context)
+    else:
+      return redirect("/")
+   
+
+
+>>>>>>> upstream/master
 
 @login_required(login_url=LOGIN_URL)
 def logout_view(request):
@@ -1070,13 +1128,30 @@ def support_issue(request, id):
     }
     return HttpResponse(json.dumps(context), "application/json")
 
+<<<<<<< HEAD
 def search(request):
+=======
+@login_required(login_url=LOGIN_URL)
+def search(request):
+    """
+    Search endpoint.
+    Renders search results populated with results from 'q' GET query.
+    If length of the query is less than 3 or no results are found, shows a
+    helpful message instead.
+    Algorithm: Includes the first 15 users whose first/last name starts with the query words.
+               Thus, searching 'Atu Gu' will return 'Atul Gupta' as one result.
+               Note: All the words in the query must be matched.
+               While, searching 'Atul Kumar', the word 'Kumar' won't match either 'Atul' or 'Gupta'
+               and thus it won't be included in the search results.
+    """
+>>>>>>> upstream/master
     key = request.GET['q']
     if len(key) < 3:
         return render(request, "globals/search.html", {'sresults': ()})
     words = (w.strip() for w in key.split())
     name_q = Q()
     for token in words:
+<<<<<<< HEAD
         name_q = name_q & (Q(first_name__icontains=token) | Q(last_name__icontains=token))
     search_results = User.objects.filter(name_q)[:15]
     search_extrainfo = []
@@ -1090,3 +1165,11 @@ def search(request):
     # zipped tuples sent, accessed in template by dot operator and indices 0 & 1
     context = {'sresults':zip(search_results, search_extrainfo)}
     return render(request, "globals/search.html", context)
+=======
+        name_q = name_q & (Q(first_name__icontains=token) | Q(last_name__icontains=token))#search constraints
+    search_results = User.objects.filter(name_q)[:15]
+    if len(search_results) == 0:
+        search_results = []
+    context = {'sresults':search_results}
+    return render(request, "globals/search.html", context)
+>>>>>>> upstream/master
